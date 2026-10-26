@@ -1,0 +1,2619 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:,">
+<title>Kobun Tango Quiz</title>
+<style>
+:root{
+  --bg:#fbf1ee; --bg2:#f6e3de; --surface:#fffaf8; --surface2:#f9e8e3;
+  --ink:#331d1a; --ink2:#7a5a54; --line:#e5c9c2;
+  --accent:#b3271e; --accent-ink:#fff; --accent-soft:#f3d3cc; --accent-mid:#d84a3f;
+  --ok:#b3271e; --ok-bg:#fbe9e5;
+  --bar-bg:#ecd2cb;
+  --shadow:0 1px 3px rgba(90,20,10,.08);
+  --fever:#7a0f0a;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#221211; --bg2:#2d1715; --surface:#2f1a17; --surface2:#3a201c;
+    --ink:#f3e3de; --ink2:#c4a49c; --line:#52312b;
+    --accent:#e2574c; --accent-ink:#fff; --accent-soft:#4a241f; --accent-mid:#e88a80;
+    --ok:#e88a80; --ok-bg:#3c201c;
+    --bar-bg:#472b26;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+    --fever:#ffb3ab;
+  }
+}
+/* Wrong state: whole screen turns deep navy blue */
+body.is-wrong{
+  --bg:#0a1c38; --bg2:#0a1c38; --surface:#12294f; --surface2:#18335f;
+  --ink:#e9effa; --ink2:#a9bedd; --line:#2c4a75;
+  --accent:#6ea8ff; --accent-ink:#081630; --accent-soft:#1d3a66; --accent-mid:#8fbcff;
+  --ok:#6ea8ff; --ok-bg:#1d3a66;
+  --bar-bg:#24406c;
+  --fever:#bcd7ff;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI",system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:400;line-height:1.6;transition:background .25s ease,color .25s ease}
+button{font:inherit;color:inherit}
+.wrap{max-width:640px;margin:0 auto;padding:20px 16px 48px}
+#flash{position:fixed;inset:0;pointer-events:none;opacity:0;z-index:50}
+#flash.correct{background:var(--accent);animation:fl .45s ease-out}
+#flash.wrong{background:#0a2a5e;animation:flw .9s ease-out}
+@keyframes fl{0%{opacity:.28}100%{opacity:0}}
+@keyframes flw{0%{opacity:.55}100%{opacity:.18}}
+body.is-wrong #flash.wrong{animation:flw2 .3s forwards}
+@keyframes flw2{to{opacity:0}}
+header.top{padding:8px 0 4px}
+h1{font-size:22px;font-weight:500;letter-spacing:.04em;margin:0;color:var(--ink)}
+h1 .en{font-size:12px;letter-spacing:.18em;color:var(--accent);display:block;font-weight:500;margin-bottom:2px}
+.sub{font-size:13px;color:var(--ink2);margin:6px 0 0}
+.note{font-size:12px;color:var(--ink2);margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+.stats{display:flex;gap:10px;margin:18px 0 6px}
+.stat{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 10px;text-align:center;box-shadow:var(--shadow)}
+.stat b{display:block;font-size:20px;font-weight:500;color:var(--accent)}
+.stat span{font-size:11px;color:var(--ink2);letter-spacing:.06em}
+.lvbar{margin:10px 0}
+.lvbar .row{display:flex;justify-content:space-between;font-size:12px;color:var(--ink2);margin-bottom:4px}
+.bar{height:6px;background:var(--bar-bg);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:3px;transition:width .4s}
+section.block{margin-top:26px}
+h2{font-size:15px;font-weight:500;letter-spacing:.06em;margin:0 0 10px;color:var(--ink);border-bottom:2px solid var(--accent);padding-bottom:6px;display:inline-block}
+.mode{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+.mode .t{font-size:15px;font-weight:500}
+.mode .d{font-size:12px;color:var(--ink2);margin-top:2px}
+.mode .btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn{appearance:none;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:9px 16px;font-size:14px;cursor:pointer;min-height:44px}
+.btn.sub{background:var(--surface);color:var(--accent)}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--ink2)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn:active{transform:scale(.98)}
+.linkbtn{display:block;width:100%;text-align:center;margin-top:14px}
+.hud{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;color:var(--ink2)}
+.hud .combo{color:var(--accent);font-weight:500;min-width:86px;text-align:right}
+.hud .combo.fever{color:var(--fever);letter-spacing:.08em}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:8px;width:40px;height:40px;cursor:pointer;font-size:16px;line-height:1}
+.qcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:28px 18px 22px;margin-top:14px;text-align:center;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.qcard .lvtag{font-size:11px;letter-spacing:.14em;color:var(--accent);border:1px solid var(--accent-soft);background:var(--accent-soft);display:inline-block;padding:2px 10px;border-radius:999px}
+.qword{font-family:"Hiragino Mincho ProN","Yu Mincho",YuMincho,serif;font-size:34px;font-weight:500;margin:14px 0 4px;letter-spacing:.04em}
+.qhint{font-size:12px;color:var(--ink2)}
+.choices{display:grid;gap:10px;margin-top:16px}
+.choice{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:15px;cursor:pointer;min-height:52px;box-shadow:var(--shadow);width:100%}
+.choice:active{transform:scale(.99)}
+.choice.correct{border-color:var(--accent);background:var(--ok-bg);color:var(--ink);font-weight:500}
+.choice.wrong{border-color:var(--accent);background:var(--accent);color:#fff}
+.choice.dim{opacity:.45}
+.choice:disabled{cursor:default}
+.feedback{margin-top:16px;min-height:28px;font-size:15px;text-align:center}
+.feedback .big{font-size:17px;font-weight:500}
+.feedback .ans{color:var(--ink2);font-size:13px;margin-top:2px}
+.nextrow{margin-top:10px;text-align:center}
+.nextrow .btn{min-width:180px}
+#particles{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+.particle{position:absolute;width:8px;height:8px;border-radius:50%;background:var(--accent-mid)}
+.result{text-align:center;padding-top:10px}
+.rank{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:64px;font-weight:500;color:var(--accent);line-height:1.1;margin:8px 0 0}
+.ranklabel{font-size:13px;color:var(--ink2);letter-spacing:.1em}
+.rstats{display:flex;gap:10px;margin:20px 0}
+.wronglist{text-align:left;margin-top:8px}
+.wrongitem{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;gap:12px}
+.wrongitem .w{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:16px;white-space:nowrap}
+.wrongitem .m{font-size:13px;color:var(--ink2);text-align:right}
+.search{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font-size:15px}
+.chips{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--ink2);border-radius:999px;padding:6px 14px;font-size:13px;cursor:pointer;min-height:36px}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.wordrow{display:flex;align-items:baseline;gap:12px;padding:10px 4px;border-bottom:1px solid var(--line)}
+.wordrow .ww{font-family:"Hiragino Mincho ProN","Yu Mincho",serif;font-size:16px;min-width:96px}
+.wordrow .mm{font-size:13px;color:var(--ink2);flex:1}
+.badge{font-size:10px;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--ink2);white-space:nowrap}
+.badge.done{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.badge.mid{border-color:var(--accent);color:var(--accent)}
+.hist{font-size:13px;color:var(--ink2)}
+.hist div{padding:8px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}
+.hidden{display:none!important}
+.small{font-size:12px;color:var(--ink2)}
+.center{text-align:center}
+@media (max-width:420px){.qword{font-size:29px}.wordrow .ww{min-width:80px}}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="flash"></div>
+<div id="particles"></div>
+<div class="wrap">
+
+  <!-- HOME -->
+  <div id="screen-home">
+    <header class="top">
+      <h1><span class="en">KOBUN TANGO QUIZ</span>古文単語クイズ</h1>
+      <p class="sub">古文単語の意味を四択で答えるクイズです。全300語をレベル別に学べます。</p>
+      <p class="note">収録語について：頻出語リストを突き合わせた上位300語を選定しています。学習記録はこのブラウザに保存されます。</p>
+    </header>
+
+    <div class="stats">
+      <div class="stat"><b id="st-mastered">0</b><span>習得済み / 300</span></div>
+      <div class="stat"><b id="st-learned">0</b><span>学習した語</span></div>
+      <div class="stat"><b id="st-acc">—</b><span>通算正答率</span></div>
+    </div>
+    <div id="lvbars"></div>
+
+    <section class="block">
+      <h2>レベル別テスト</h2>
+      <div class="mode">
+        <div class="t">Lv1 — 基礎</div><div class="d">まず押さえる100語</div>
+        <div class="btns">
+          <button class="btn" data-start="lv1:10">10問</button>
+          <button class="btn sub" data-start="lv1:30">30問</button>
+          <button class="btn sub" data-start="lv1:100">100問</button>
+        </div>
+      </div>
+      <div class="mode">
+        <div class="t">Lv2 — 標準</div><div class="d">入試頻出の100語</div>
+        <div class="btns">
+          <button class="btn" data-start="lv2:10">10問</button>
+          <button class="btn sub" data-start="lv2:30">30問</button>
+          <button class="btn sub" data-start="lv2:100">100問</button>
+        </div>
+      </div>
+      <div class="mode">
+        <div class="t">Lv3 — 発展</div><div class="d">差がつく100語</div>
+        <div class="btns">
+          <button class="btn" data-start="lv3:10">10問</button>
+          <button class="btn sub" data-start="lv3:30">30問</button>
+          <button class="btn sub" data-start="lv3:100">100問</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>その他の出題</h2>
+      <div class="mode">
+        <div class="t">全体ランダム</div><div class="d">全300語からランダムに出題</div>
+        <div class="btns">
+          <button class="btn" data-start="all:10">10問</button>
+          <button class="btn sub" data-start="all:30">30問</button>
+        </div>
+      </div>
+      <div class="mode">
+        <div class="t">苦手復習</div><div class="d">間違えたことがある語・未習得の語を優先して出題</div>
+        <div class="btns">
+          <button class="btn" data-start="weak:10">10問</button>
+          <button class="btn sub" data-start="weak:30">30問</button>
+        </div>
+      </div>
+      <div class="mode" id="retry-box">
+        <div class="t">間違いだけ再テスト</div><div class="d" id="retry-desc">直近のテストで間違えた単語をもう一度</div>
+        <div class="btns"><button class="btn" id="btn-retry">再テストする</button></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>単語一覧</h2>
+      <button class="btn sub linkbtn" id="btn-list">300語を検索・確認する</button>
+    </section>
+
+    <section class="block" id="hist-block">
+      <h2>最近の学習</h2>
+      <div class="hist" id="hist"></div>
+    </section>
+
+    <section class="block">
+      <button class="btn ghost linkbtn" id="btn-reset">学習記録をすべて消す</button>
+      <p class="small center" id="reset-msg"></p>
+    </section>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="screen-quiz" class="hidden">
+    <div class="hud">
+      <button class="iconbtn" id="btn-quit" aria-label="やめる">×</button>
+      <div id="hud-mode"></div>
+      <div class="combo" id="hud-combo"></div>
+    </div>
+    <div class="bar" style="margin-top:12px"><i id="qbar" style="width:0%"></i></div>
+    <div class="small" id="hud-count" style="margin-top:6px"></div>
+    <div class="qcard">
+      <span class="lvtag" id="q-lv"></span>
+      <div class="qword" id="q-word"></div>
+      <div class="qhint">意味として正しいものを選んでください</div>
+    </div>
+    <div class="choices" id="choices"></div>
+    <div class="feedback" id="feedback"></div>
+    <div class="nextrow hidden" id="nextrow"><button class="btn" id="btn-next">次へ</button></div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="screen-result" class="hidden">
+    <div class="result">
+      <div class="ranklabel">RANK</div>
+      <div class="rank" id="r-rank">S</div>
+      <p class="sub" id="r-msg"></p>
+      <div class="rstats">
+        <div class="stat"><b id="r-correct">0</b><span>正解</span></div>
+        <div class="stat"><b id="r-acc">0%</b><span>正答率</span></div>
+        <div class="stat"><b id="r-combo">0</b><span>MAX COMBO</span></div>
+      </div>
+    </div>
+    <section class="block">
+      <h2>間違えた単語</h2>
+      <div class="wronglist" id="r-wrong"></div>
+    </section>
+    <div class="mode btns" style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" id="btn-retry2">間違いだけ再テスト</button>
+      <button class="btn sub" id="btn-again">同じ条件でもう一度</button>
+      <button class="btn ghost" id="btn-home">ホームへ</button>
+    </div>
+  </div>
+
+  <!-- LIST -->
+  <div id="screen-list" class="hidden">
+    <div class="hud">
+      <button class="iconbtn" id="btn-back" aria-label="戻る">←</button>
+      <div>単語一覧（300語）</div><div></div>
+    </div>
+    <div style="margin-top:14px"><input class="search" id="search" type="search" placeholder="単語・意味で検索" autocomplete="off"></div>
+    <div class="chips" id="chips">
+      <button class="chip on" data-lv="0">すべて</button>
+      <button class="chip" data-lv="1">Lv1</button>
+      <button class="chip" data-lv="2">Lv2</button>
+      <button class="chip" data-lv="3">Lv3</button>
+      <button class="chip" data-lv="9">未習得のみ</button>
+    </div>
+    <div class="small" id="list-count"></div>
+    <div id="wordlist"></div>
+  </div>
+
+</div>
+<script>
+var WORDS = [
+ {
+  "id": 1,
+  "w": "いと",
+  "m": "とても",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 2,
+  "w": "あはれなり",
+  "m": "しみじみと心を動かされる",
+  "g": "aware",
+  "lv": 1
+ },
+ {
+  "id": 3,
+  "w": "をかし",
+  "m": "趣がある・おもしろい",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 4,
+  "w": "いみじ",
+  "m": "程度がはなはだしい（すばらしい／ひどい）",
+  "g": "hidoi",
+  "lv": 1
+ },
+ {
+  "id": 5,
+  "w": "めでたし",
+  "m": "すばらしい",
+  "g": "subarashi",
+  "lv": 1
+ },
+ {
+  "id": 6,
+  "w": "うつくし",
+  "m": "かわいい",
+  "g": "kawaii",
+  "lv": 1
+ },
+ {
+  "id": 7,
+  "w": "かなし",
+  "m": "いとしい",
+  "g": "kawaii",
+  "lv": 1
+ },
+ {
+  "id": 8,
+  "w": "おぼつかなし",
+  "m": "はっきりせず気がかりだ",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 9,
+  "w": "こころもとなし",
+  "m": "心配で落ち着かず待ち遠しい",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 10,
+  "w": "ゆかし",
+  "m": "見たい・聞きたい・知りたいと思う",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 11,
+  "w": "あさまし",
+  "m": "驚きあきれるほどだ",
+  "g": "akireru",
+  "lv": 1
+ },
+ {
+  "id": 12,
+  "w": "つれづれなり",
+  "m": "退屈である",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 13,
+  "w": "なつかし",
+  "m": "心が引かれて親しみ深い",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 14,
+  "w": "こころにくし",
+  "m": "奥ゆかしくて上品で立派だ",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 15,
+  "w": "かたし",
+  "m": "困難である・めったにない",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 16,
+  "w": "あらまほし",
+  "m": "理想的である",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 17,
+  "w": "さうざうし",
+  "m": "物足りなくて寂しい",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 18,
+  "w": "すさまじ",
+  "m": "興ざめである・殺風景だ",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 19,
+  "w": "わびし",
+  "m": "困ってつらい・みじめだ",
+  "g": "tsurai",
+  "lv": 1
+ },
+ {
+  "id": 20,
+  "w": "うし",
+  "m": "つらい",
+  "g": "tsurai",
+  "lv": 1
+ },
+ {
+  "id": 21,
+  "w": "こころぐるし",
+  "m": "苦しい・せつない",
+  "g": "tsurai",
+  "lv": 1
+ },
+ {
+  "id": 22,
+  "w": "つらなり",
+  "m": "恥ずかしい",
+  "g": "hazukashi",
+  "lv": 1
+ },
+ {
+  "id": 23,
+  "w": "はづかし",
+  "m": "立派で気後れする・恥ずかしい",
+  "g": "hazukashi",
+  "lv": 1
+ },
+ {
+  "id": 24,
+  "w": "かしこし",
+  "m": "恐れ多い・畏れ敬うべきだ",
+  "g": "osoroshii",
+  "lv": 1
+ },
+ {
+  "id": 25,
+  "w": "おそろし",
+  "m": "恐ろしい",
+  "g": "osoroshii",
+  "lv": 1
+ },
+ {
+  "id": 26,
+  "w": "あやし",
+  "m": "不思議だ・身分が低い",
+  "g": "fushigi",
+  "lv": 1
+ },
+ {
+  "id": 27,
+  "w": "ふしぎなり",
+  "m": "不思議である",
+  "g": "fushigi",
+  "lv": 1
+ },
+ {
+  "id": 28,
+  "w": "けし",
+  "m": "普通でない・異様だ",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 29,
+  "w": "あいなし",
+  "m": "つまらない・気に入らない",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 30,
+  "w": "いぶかし",
+  "m": "疑わしい・知りたい",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 31,
+  "w": "いぶせし",
+  "m": "もやもやして晴れない",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 32,
+  "w": "ねたし",
+  "m": "ねたましい・悔しい",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 33,
+  "w": "うらやまし",
+  "m": "うらやましい",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 34,
+  "w": "こひし",
+  "m": "恋しい・会いたい",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 35,
+  "w": "しのぶ",
+  "m": "がまんする・人目を避ける",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 36,
+  "w": "おぼゆ",
+  "m": "思い出される・思われる",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 37,
+  "w": "おぼえ",
+  "m": "評判・寵愛",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 38,
+  "w": "こころ",
+  "m": "心・気持ち・意味",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 39,
+  "w": "こと",
+  "m": "事・言葉・事情",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 40,
+  "w": "もの",
+  "m": "人・物・事柄",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 41,
+  "w": "さま",
+  "m": "様子・姿",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 42,
+  "w": "かげ",
+  "m": "光・影・姿・面影",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 43,
+  "w": "なごり",
+  "m": "別れの余情・痕跡・未練",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 44,
+  "w": "ゆゑ",
+  "m": "理由・わけ・由緒",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 45,
+  "w": "ちぎり",
+  "m": "約束・運命・前世からの因縁",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 46,
+  "w": "いのち",
+  "m": "命・寿命",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 47,
+  "w": "よ",
+  "m": "世の中・時代・一生",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 48,
+  "w": "つき",
+  "m": "月・月日（時間の経過）",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 49,
+  "w": "はな",
+  "m": "花・桜",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 50,
+  "w": "やま",
+  "m": "山",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 51,
+  "w": "かは",
+  "m": "川",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 52,
+  "w": "みゆ",
+  "m": "見える・見られる",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 53,
+  "w": "きこゆ",
+  "m": "聞こえる・評判になる",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 54,
+  "w": "おもふ",
+  "m": "思う・恋しく思う",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 55,
+  "w": "おもひ",
+  "m": "思い・心配・恋心",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 56,
+  "w": "なく",
+  "m": "泣く・（鳥などが）鳴く",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 57,
+  "w": "わらふ",
+  "m": "笑う・あざ笑う",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 58,
+  "w": "いふ",
+  "m": "言う",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 59,
+  "w": "きく",
+  "m": "聞く・尋ねる",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 60,
+  "w": "しる",
+  "m": "知る・治める・経験する",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 61,
+  "w": "ゆく",
+  "m": "行く・過ぎ去る",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 62,
+  "w": "く",
+  "m": "来る",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 63,
+  "w": "あり",
+  "m": "ある・いる・存在する",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 64,
+  "w": "なし",
+  "m": "ない",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 65,
+  "w": "なる",
+  "m": "なる・（子を）生む",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 66,
+  "w": "す",
+  "m": "する",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 67,
+  "w": "みる",
+  "m": "見る・世話をする・経験する",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 68,
+  "w": "たまふ",
+  "m": "お〜になる・〜なさる（尊敬）",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 69,
+  "w": "まうす",
+  "m": "申し上げる（謙譲）",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 70,
+  "w": "のたまふ",
+  "m": "おっしゃる（尊敬）",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 71,
+  "w": "はべり",
+  "m": "あります・ございます（丁寧）",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 72,
+  "w": "さぶらふ",
+  "m": "お仕えする・あります（謙譲・丁寧）",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 73,
+  "w": "つかうまつる",
+  "m": "お仕え申し上げる（謙譲）",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 74,
+  "w": "あそぶ",
+  "m": "音楽を演奏して楽しむ・遊ぶ",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 75,
+  "w": "かたる",
+  "m": "語る・物語をする",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 76,
+  "w": "よむ",
+  "m": "（歌を）詠む・読む・数える",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 77,
+  "w": "かく",
+  "m": "書く・描く",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 78,
+  "w": "おくる",
+  "m": "送る・（時を）過ごす",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 79,
+  "w": "わたる",
+  "m": "渡る・（生涯）暮らす",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 80,
+  "w": "すむ",
+  "m": "住む・澄む",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 81,
+  "w": "かよふ",
+  "m": "行き来する・似ている",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 82,
+  "w": "かへる",
+  "m": "帰る・返る・繰り返す",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 83,
+  "w": "いでく",
+  "m": "出て来る・出かける",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 84,
+  "w": "いる",
+  "m": "入る・（日が）沈む",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 85,
+  "w": "おく",
+  "m": "起きる・置く",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 86,
+  "w": "ぬ",
+  "m": "寝る",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 87,
+  "w": "たつ",
+  "m": "立つ・出発する・（月日が）経つ",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 88,
+  "w": "すわる",
+  "m": "座る",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 89,
+  "w": "とぶ",
+  "m": "飛ぶ・急いで行く",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 90,
+  "w": "はしる",
+  "m": "走る・（涙などが）流れる",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 91,
+  "w": "もつ",
+  "m": "持つ・持っている",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 92,
+  "w": "とる",
+  "m": "取る・選ぶ",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 93,
+  "w": "あたふ",
+  "m": "与える",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 94,
+  "w": "うく",
+  "m": "受ける・承知する",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 95,
+  "w": "まかづ",
+  "m": "退出する・まかり出る",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 96,
+  "w": "まゐる",
+  "m": "参上する・差し上げる（謙譲）",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 97,
+  "w": "いたる",
+  "m": "至る・行き着く",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 98,
+  "w": "あふ",
+  "m": "会う・結婚する",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 99,
+  "w": "わかれる",
+  "m": "別れる",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 100,
+  "w": "こふ",
+  "m": "恋い慕う",
+  "g": "",
+  "lv": 1
+ },
+ {
+  "id": 101,
+  "w": "したふ",
+  "m": "慕う・なつかしむ",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 102,
+  "w": "まめなり",
+  "m": "まじめだ・実用的だ",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 103,
+  "w": "やさし",
+  "m": "恥ずかしい・優美だ",
+  "g": "hazukashi",
+  "lv": 2
+ },
+ {
+  "id": 104,
+  "w": "えんなり",
+  "m": "優美で艶っぽい",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 105,
+  "w": "らうたし",
+  "m": "かわいらしい・いじらしい",
+  "g": "kawaii",
+  "lv": 2
+ },
+ {
+  "id": 106,
+  "w": "いとほし",
+  "m": "気の毒だ・かわいそうだ",
+  "g": "aware",
+  "lv": 2
+ },
+ {
+  "id": 107,
+  "w": "いたし",
+  "m": "ひどい・とても",
+  "g": "hidoi",
+  "lv": 2
+ },
+ {
+  "id": 108,
+  "w": "いたづらなり",
+  "m": "むだだ・役に立たない",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 109,
+  "w": "すずろなり",
+  "m": "なんとなく・思いがけない",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 110,
+  "w": "むつかし",
+  "m": "不快だ・気味が悪い",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 111,
+  "w": "うたてし",
+  "m": "情けない・ひどい",
+  "g": "akireru",
+  "lv": 2
+ },
+ {
+  "id": 112,
+  "w": "うるはし",
+  "m": "整っていて美しい・礼儀正しい",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 113,
+  "w": "きよし",
+  "m": "清らかだ・美しい",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 114,
+  "w": "けうらなり",
+  "m": "清らかで美しい",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 115,
+  "w": "なまめかし",
+  "m": "若々しく優美だ",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 116,
+  "w": "はかなし",
+  "m": "頼りない・むなしい・はかない",
+  "g": "hakanai",
+  "lv": 2
+ },
+ {
+  "id": 117,
+  "w": "あだなり",
+  "m": "誠実でない・浮気だ",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 118,
+  "w": "まがまがし",
+  "m": "不吉だ・縁起が悪い",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 119,
+  "w": "さかし",
+  "m": "賢い・利口だ",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 120,
+  "w": "さとし",
+  "m": "賢い・悟りが早い",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 121,
+  "w": "あきらかなり",
+  "m": "明らかである",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 122,
+  "w": "たしかなり",
+  "m": "確かである",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 123,
+  "w": "おとなし",
+  "m": "大人びている・分別がある",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 124,
+  "w": "わかし",
+  "m": "若い・幼い",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 125,
+  "w": "おいなり",
+  "m": "年を取っている",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 126,
+  "w": "ちいさし",
+  "m": "小さい",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 127,
+  "w": "おほきなり",
+  "m": "大きい",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 128,
+  "w": "なかなかなり",
+  "m": "中途半端だ・なまじ",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 129,
+  "w": "よろし",
+  "m": "まあよい・普通だ",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 130,
+  "w": "わるし",
+  "m": "悪い",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 131,
+  "w": "よし",
+  "m": "よい・立派だ",
+  "g": "subarashi",
+  "lv": 2
+ },
+ {
+  "id": 132,
+  "w": "あし",
+  "m": "悪い・よくない",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 133,
+  "w": "たかし",
+  "m": "高い",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 134,
+  "w": "ひくし",
+  "m": "低い",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 135,
+  "w": "とほし",
+  "m": "遠い",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 136,
+  "w": "ちかし",
+  "m": "近い・親しい",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 137,
+  "w": "ふかし",
+  "m": "深い",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 138,
+  "w": "あさし",
+  "m": "浅い",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 139,
+  "w": "つよし",
+  "m": "強い",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 140,
+  "w": "よわし",
+  "m": "弱い",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 141,
+  "w": "はやし",
+  "m": "速い・早い",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 142,
+  "w": "おそし",
+  "m": "遅い・ゆっくりだ",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 143,
+  "w": "ながし",
+  "m": "長い",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 144,
+  "w": "みじかし",
+  "m": "短い",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 145,
+  "w": "おほし",
+  "m": "多い",
+  "g": "ooi",
+  "lv": 2
+ },
+ {
+  "id": 146,
+  "w": "すくなし",
+  "m": "少ない",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 147,
+  "w": "おぼろけなり",
+  "m": "並ひと通りだ・いい加減だ",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 148,
+  "w": "ことなり",
+  "m": "特別だ・格別だ",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 149,
+  "w": "おなじ",
+  "m": "同じだ",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 150,
+  "w": "ことごとし",
+  "m": "仰々しい・大げさだ",
+  "g": "oogesa",
+  "lv": 2
+ },
+ {
+  "id": 151,
+  "w": "しげし",
+  "m": "（草木が）茂っている・頻繁だ",
+  "g": "ooi",
+  "lv": 2
+ },
+ {
+  "id": 152,
+  "w": "しづかなり",
+  "m": "静かである",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 153,
+  "w": "さわがし",
+  "m": "騒がしい",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 154,
+  "w": "のどかなり",
+  "m": "のどかで穏やかだ",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 155,
+  "w": "あらはなり",
+  "m": "明らかだ・露骨だ",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 156,
+  "w": "ひそかなり",
+  "m": "ひそかである・内緒だ",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 157,
+  "w": "つねなり",
+  "m": "普通だ・いつもの通りだ",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 158,
+  "w": "めづらし",
+  "m": "珍しい・すばらしい",
+  "g": "subarashi",
+  "lv": 2
+ },
+ {
+  "id": 159,
+  "w": "あたらし",
+  "m": "惜しい・もったいない",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 160,
+  "w": "なつかしき",
+  "m": "懐かしい",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 161,
+  "w": "ふるし",
+  "m": "古い・古びている",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 162,
+  "w": "あたらしき",
+  "m": "新しい",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 163,
+  "w": "わかやかなり",
+  "m": "若々しい",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 164,
+  "w": "けなげなり",
+  "m": "健気だ・勇ましい",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 165,
+  "w": "つれなし",
+  "m": "平気な顔をしている・冷淡だ",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 166,
+  "w": "こころづきなし",
+  "m": "気にくわない・思いがけない",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 167,
+  "w": "こころゆく",
+  "m": "満足だ・気が晴れる",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 168,
+  "w": "こころあわただし",
+  "m": "心が落ち着かない・忙しい",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 169,
+  "w": "あわただし",
+  "m": "慌ただしい・忙しい",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 170,
+  "w": "いそがし",
+  "m": "忙しい",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 171,
+  "w": "ひまな し",
+  "m": "暇である",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 172,
+  "w": "ねんごろなり",
+  "m": "丁寧だ・親密だ",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 173,
+  "w": "なれなり",
+  "m": "親しい・慣れている",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 174,
+  "w": "うとし",
+  "m": "親しくない・疎遠だ",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 175,
+  "w": "ゆるし",
+  "m": "許可・許し",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 176,
+  "w": "つみ",
+  "m": "罪・罰・過失",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 177,
+  "w": "ちから",
+  "m": "力・権力",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 178,
+  "w": "くらい",
+  "m": "位・地位",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 179,
+  "w": "みかど",
+  "m": "天皇・御所",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 180,
+  "w": "きみ",
+  "m": "主君・あなた（敬称）",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 181,
+  "w": "おんこと",
+  "m": "あなた様（敬称）・御事",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 182,
+  "w": "やど",
+  "m": "宿・家",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 183,
+  "w": "いへ",
+  "m": "家・家庭",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 184,
+  "w": "みやこ",
+  "m": "都・京",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 185,
+  "w": "さと",
+  "m": "里・実家・田舎",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 186,
+  "w": "くに",
+  "m": "国・故郷",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 187,
+  "w": "みち",
+  "m": "道・方法・道理",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 188,
+  "w": "さかひ",
+  "m": "境・辺境",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 189,
+  "w": "ほとり",
+  "m": "あたり・そば",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 190,
+  "w": "あひだ",
+  "m": "間・間柄",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 191,
+  "w": "ほど",
+  "m": "程度・〜くらい・時間",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 192,
+  "w": "ころ",
+  "m": "頃・時期",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 193,
+  "w": "むかし",
+  "m": "昔",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 194,
+  "w": "いま",
+  "m": "今・現在",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 195,
+  "w": "のち",
+  "m": "後・将来",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 196,
+  "w": "さき",
+  "m": "前・先・以前",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 197,
+  "w": "あした",
+  "m": "朝・翌朝",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 198,
+  "w": "ゆふべ",
+  "m": "夕方・昨夜",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 199,
+  "w": "よる",
+  "m": "夜",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 200,
+  "w": "ひる",
+  "m": "昼",
+  "g": "",
+  "lv": 2
+ },
+ {
+  "id": 201,
+  "w": "あかつき",
+  "m": "夜明け方・暁",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 202,
+  "w": "しののめ",
+  "m": "明け方・東雲",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 203,
+  "w": "つとめて",
+  "m": "早朝に・翌朝早く",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 204,
+  "w": "あくがる",
+  "m": "心がさまよう・憧れて心が離れる",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 205,
+  "w": "あく",
+  "m": "飽きる・満足する",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 206,
+  "w": "あつかふ",
+  "m": "取り扱う・世話をする・もてなす",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 207,
+  "w": "あらはす",
+  "m": "表す・書き表す",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 208,
+  "w": "いつく",
+  "m": "大切に仕える・いつき育てる",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 209,
+  "w": "いとなむ",
+  "m": "営む・（仏事を）行う",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 210,
+  "w": "いましむ",
+  "m": "戒める・禁止する",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 211,
+  "w": "うけたまはる",
+  "m": "承る・お聞きする（謙譲）",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 212,
+  "w": "うしろめたし",
+  "m": "気がかりだ・心配だ",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 213,
+  "w": "うつす",
+  "m": "移す・写す・（色香が）移る",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 214,
+  "w": "うらむ",
+  "m": "恨む・心残りに思う",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 215,
+  "w": "おどろく",
+  "m": "目が覚める・はっと気づく",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 216,
+  "w": "おとなふ",
+  "m": "訪れる・音がする",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 217,
+  "w": "おはす",
+  "m": "いらっしゃる・おありになる（尊敬）",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 218,
+  "w": "かしづく",
+  "m": "大切に育てる・世話をする",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 219,
+  "w": "かたらふ",
+  "m": "語り合う・口説く・仲間にする",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 220,
+  "w": "きはむ",
+  "m": "極める・尽くす",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 221,
+  "w": "くゆる",
+  "m": "後悔する",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 222,
+  "w": "くらぶ",
+  "m": "比べる・競う",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 223,
+  "w": "こころざし",
+  "m": "志・好意・志す気持ち",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 224,
+  "w": "こころばへ",
+  "m": "気立て・心の備わり",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 225,
+  "w": "ことわり",
+  "m": "道理・当然のこと・理由",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 226,
+  "w": "さうし",
+  "m": "草子・冊子・書物",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 227,
+  "w": "さながら",
+  "m": "まるで・そのまま",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 228,
+  "w": "しるし",
+  "m": "効き目・証拠・印",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 229,
+  "w": "すゑ",
+  "m": "末・終わり・子孫",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 230,
+  "w": "たがふ",
+  "m": "違う・約束に背く",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 231,
+  "w": "たてまつる",
+  "m": "差し上げる（謙譲）",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 232,
+  "w": "たのむ",
+  "m": "頼る・当てにする",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 233,
+  "w": "たまはる",
+  "m": "頂戴する・賜る（謙譲）",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 234,
+  "w": "ちぎる",
+  "m": "固く約束する・契りを結ぶ",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 235,
+  "w": "つきづきし",
+  "m": "似つかわしい・ふさわしい",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 236,
+  "w": "つごもり",
+  "m": "月末・晦日",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 237,
+  "w": "ながむ",
+  "m": "ぼんやりと物思いに沈む・眺める",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 238,
+  "w": "なぐさむ",
+  "m": "慰める・慰む・気を紛らす",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 239,
+  "w": "なげく",
+  "m": "嘆く・嘆き悲しむ",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 240,
+  "w": "なさけ",
+  "m": "思いやり・情け・風流心",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 241,
+  "w": "なやむ",
+  "m": "悩む・苦しむ・病む",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 242,
+  "w": "にほふ",
+  "m": "美しく映える・香る・色づく",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 243,
+  "w": "ぬし",
+  "m": "主・主人・あなた",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 244,
+  "w": "ねがふ",
+  "m": "願う・祈る",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 245,
+  "w": "はからふ",
+  "m": "取り計らう・計画する",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 246,
+  "w": "はかる",
+  "m": "謀る・だます・計る",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 247,
+  "w": "はかばかし",
+  "m": "はっきりしている・頼もしい",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 248,
+  "w": "はぐくむ",
+  "m": "育てる・養い育てる",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 249,
+  "w": "はしたなし",
+  "m": "きまりが悪い・みっともない",
+  "g": "hazukashi",
+  "lv": 3
+ },
+ {
+  "id": 250,
+  "w": "はて",
+  "m": "果て・終わり・最後",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 251,
+  "w": "はばかる",
+  "m": "遠慮する・はばかられる",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 252,
+  "w": "ひさし",
+  "m": "久しい・長い間だ",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 253,
+  "w": "ひとへに",
+  "m": "ひたすら・一途に・もっぱら",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 254,
+  "w": "ふす",
+  "m": "伏す・寝る・横たわる",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 255,
+  "w": "ふみ",
+  "m": "文・手紙・書物",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 256,
+  "w": "ふるさと",
+  "m": "古里・もとの都・なじみの場所",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 257,
+  "w": "へだたる",
+  "m": "隔たる・遠ざかる",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 258,
+  "w": "ほころぶ",
+  "m": "ほころびる・（花が）開き始める",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 259,
+  "w": "ほのかなり",
+  "m": "かすかだ・ほのかだ",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 260,
+  "w": "まうく",
+  "m": "設ける・準備する・用意する",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 261,
+  "w": "もてなす",
+  "m": "もてなす・振る舞う・取り計らう",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 262,
+  "w": "もとむ",
+  "m": "求める・欲しがる・探し求める",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 263,
+  "w": "もどく",
+  "m": "非難する・とがめる・咎める",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 264,
+  "w": "ものがたり",
+  "m": "物語・話・語り",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 265,
+  "w": "もはら",
+  "m": "もっぱら・ひたすら",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 266,
+  "w": "もみぢ",
+  "m": "紅葉・もみじ",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 267,
+  "w": "やうやう",
+  "m": "ようよう・だんだん・やっとのことで",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 268,
+  "w": "みづから",
+  "m": "自ら・自分で・直接に",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 269,
+  "w": "みやびなり",
+  "m": "優雅だ・風雅だ",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 270,
+  "w": "みゆき",
+  "m": "行幸・天皇のお出まし・御幸",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 271,
+  "w": "むかふ",
+  "m": "向かう・迎える・対する",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 272,
+  "w": "むすぶ",
+  "m": "結ぶ・（露などが）できる",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 273,
+  "w": "むなし",
+  "m": "むなしい・空だ・中身がない",
+  "g": "hakanai",
+  "lv": 3
+ },
+ {
+  "id": 274,
+  "w": "めす",
+  "m": "お召しになる・ご覧になる（尊敬）",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 275,
+  "w": "めづ",
+  "m": "愛する・賞美する",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 276,
+  "w": "もがな",
+  "m": "〜があればなあ（願望の終助詞）",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 277,
+  "w": "さすがに",
+  "m": "やはり・そうは言っても",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 278,
+  "w": "たまさかに",
+  "m": "たまたま・偶然に",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 279,
+  "w": "なべて",
+  "m": "すべて・一般に・並ひと通り",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 280,
+  "w": "ねんず",
+  "m": "我慢する・祈る・念じる",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 281,
+  "w": "はやす",
+  "m": "囃す・褒める・流行らせる",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 282,
+  "w": "へだつ",
+  "m": "隔てる・距てる・遠ざける",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 283,
+  "w": "ほととぎす",
+  "m": "時鳥（鳥名）",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 284,
+  "w": "まさる",
+  "m": "優れる・勝る・増す",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 285,
+  "w": "またし",
+  "m": "完全だ・申し分ない",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 286,
+  "w": "まどふ",
+  "m": "迷う・心が乱れる",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 287,
+  "w": "かたじけなし",
+  "m": "恐れ多い・ありがたい",
+  "g": "osoroshii",
+  "lv": 3
+ },
+ {
+  "id": 288,
+  "w": "ありがたし",
+  "m": "めったにない・有り難い",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 289,
+  "w": "あてなり",
+  "m": "上品だ・優雅だ",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 290,
+  "w": "いやし",
+  "m": "身分が低い・下品だ",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 291,
+  "w": "かたち",
+  "m": "姿・容貌",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 292,
+  "w": "けしき",
+  "m": "景色・様子・気配",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 293,
+  "w": "ついで",
+  "m": "順序・機会・ついで",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 294,
+  "w": "やうす",
+  "m": "様子・ありさま",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 295,
+  "w": "おぼしめす",
+  "m": "お思いになる（尊敬）",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 296,
+  "w": "きこしめす",
+  "m": "お聞きになる（尊敬）",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 297,
+  "w": "あそばす",
+  "m": "なさる・お〜あそばす（尊敬）",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 298,
+  "w": "やがて",
+  "m": "まもなく・そのまま",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 299,
+  "w": "しどけなし",
+  "m": "無造作だ・くつろいでいる",
+  "g": "",
+  "lv": 3
+ },
+ {
+  "id": 300,
+  "w": "こちたし",
+  "m": "大げさで煩わしい",
+  "g": "oogesa",
+  "lv": 3
+ }
+];
+var LS_KEY = "kobun-tango-quiz-v1";
+var store = loadStore();
+function loadStore(){
+  try{ var raw = localStorage.getItem(LS_KEY); if(raw){ var o = JSON.parse(raw); if(o && o.words) return o; } }catch(e){}
+  return { words:{}, history:[], lastWrong:[] };
+}
+function saveStore(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(store)); }catch(e){} }
+function rec(id){ if(!store.words[id]) store.words[id] = {s:0,m:false,a:0,c:0,w:0}; return store.words[id]; }
+function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
+
+/* Audio */
+var actx=null;
+function beep(freq,dur,type,delay,vol){
+  try{
+    if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==="suspended") actx.resume();
+    var t = actx.currentTime + (delay||0);
+    var o = actx.createOscillator(), g = actx.createGain();
+    o.type = type||"sine"; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol||0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t+dur);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t+dur);
+  }catch(e){}
+}
+function sndCorrect(fever){ beep(660,.12,"sine",0); beep(880,.18,"sine",.09); if(fever){ beep(1108,.16,"sine",.18); beep(1318,.22,"sine",.27); } }
+function sndWrong(){ beep(196,.28,"sawtooth",0,.07); beep(147,.32,"sawtooth",.05,.07); }
+function vibrate(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
+
+/* Screens */
+function show(id){
+  ["screen-home","screen-quiz","screen-result","screen-list"].forEach(function(s){ document.getElementById(s).classList.toggle("hidden", s!==id); });
+  document.body.classList.remove("is-wrong");
+  window.scrollTo(0,0);
+  if(id==="screen-home") renderHome();
+}
+
+/* Quiz state */
+var quiz=null;
+function buildChoices(word){
+  var pool = WORDS.filter(function(x){ return x.id!==word.id && x.m!==word.m && !(word.g && x.g && x.g===word.g); });
+  var sameLv = shuffle(pool.filter(function(x){return x.lv===word.lv;}));
+  var other = shuffle(pool.filter(function(x){return x.lv!==word.lv;}));
+  var picked=[], seen={}; seen[word.m]=true;
+  sameLv.concat(other).forEach(function(x){ if(picked.length<3 && !seen[x.m]){ seen[x.m]=true; picked.push(x); } });
+  return shuffle(picked.concat([word]));
+}
+function startQuiz(mode,count,label){
+  var pool=[];
+  if(mode==="lv1") pool = WORDS.filter(function(w){return w.lv===1;});
+  else if(mode==="lv2") pool = WORDS.filter(function(w){return w.lv===2;});
+  else if(mode==="lv3") pool = WORDS.filter(function(w){return w.lv===3;});
+  else if(mode==="all") pool = WORDS.slice();
+  else if(mode==="weak"){
+    pool = WORDS.filter(function(w){ var r=store.words[w.id]; return !r || !r.m; });
+    pool.sort(function(a,b){ var ra=store.words[a.id]||{w:0}, rb=store.words[b.id]||{w:0}; return (rb.w-ra.w) || ((ra.s||0)-(rb.s||0)); });
+    var weakTop = pool.filter(function(w){ var r=store.words[w.id]; return r && r.w>0; });
+    pool = shuffle(weakTop).concat(shuffle(pool.filter(function(w){ var r=store.words[w.id]; return !(r && r.w>0); })));
+  }
+  else if(mode==="retry"){ pool = store.lastWrong.map(function(id){ return WORDS.find(function(w){return w.id===id;}); }).filter(Boolean); }
+  if(!pool.length) return;
+  var n = Math.min(count, pool.length);
+  var qs = (mode==="weak" ? pool.slice(0,n) : shuffle(pool).slice(0,n)).map(function(w){
+    return { word:w, choices:buildChoices(w) };
+  });
+  quiz = { mode:mode, label:label, qs:qs, i:0, correct:0, combo:0, maxCombo:0, wrong:[], answered:false };
+  show("screen-quiz");
+  renderQ();
+}
+function renderQ(){
+  var q = quiz.qs[quiz.i];
+  document.getElementById("hud-mode").textContent = quiz.label;
+  document.getElementById("hud-count").textContent = (quiz.i+1) + " / " + quiz.qs.length + " 問";
+  document.getElementById("qbar").style.width = ((quiz.i)/quiz.qs.length*100)+"%";
+  updateCombo();
+  document.getElementById("q-lv").textContent = "Lv" + q.word.lv;
+  document.getElementById("q-word").textContent = q.word.w;
+  document.getElementById("feedback").innerHTML = "";
+  document.getElementById("nextrow").classList.add("hidden");
+  var box = document.getElementById("choices"); box.innerHTML="";
+  q.choices.forEach(function(c){
+    var b=document.createElement("button"); b.className="choice"; b.textContent=c.m;
+    b.addEventListener("click", function(){ answer(c,b); });
+    box.appendChild(b);
+  });
+  quiz.answered=false;
+}
+function updateCombo(){
+  var el=document.getElementById("hud-combo");
+  if(quiz.combo>=5){ el.textContent="FEVER ×"+quiz.combo; el.classList.add("fever"); }
+  else if(quiz.combo>=2){ el.textContent=quiz.combo+" COMBO"; el.classList.remove("fever"); }
+  else { el.textContent=""; el.classList.remove("fever"); }
+}
+function flash(kind){
+  var f=document.getElementById("flash"); f.className=""; void f.offsetWidth; f.className=kind;
+}
+function particles(){
+  var box=document.getElementById("particles");
+  for(var i=0;i<14;i++){
+    var p=document.createElement("div"); p.className="particle";
+    p.style.left=(50+(Math.random()*36-18))+"%"; p.style.top="38%";
+    box.appendChild(p);
+    var dx=(Math.random()*220-110), dy=(Math.random()*-160-20), t=600+Math.random()*400;
+    try{ p.animate([{transform:"translate(0,0)",opacity:1},{transform:"translate("+dx+"px,"+(dy+180)+"px)",opacity:0}],{duration:t,easing:"cubic-bezier(.2,.7,.3,1)"}); }catch(e){}
+    (function(el,tt){ setTimeout(function(){ el.remove(); }, tt+50); })(p,t);
+  }
+}
+function answer(choice,btn){
+  if(quiz.answered) return; quiz.answered=true;
+  var q=quiz.qs[quiz.i], word=q.word, r=rec(word.id);
+  var isOk = choice.id===word.id;
+  r.a++;
+  var btns=document.querySelectorAll(".choice");
+  btns.forEach(function(b){ b.disabled=true; if(b.textContent===word.m) b.classList.add("correct"); else if(b===btn && !isOk) b.classList.add("wrong"); else b.classList.add("dim"); });
+  var fb=document.getElementById("feedback");
+  if(isOk){
+    quiz.correct++; quiz.combo++; quiz.maxCombo=Math.max(quiz.maxCombo,quiz.combo);
+    r.c++; r.s++; if(r.s>=2) r.m=true;
+    sndCorrect(quiz.combo>=5); vibrate(25); flash("correct"); particles();
+    document.body.classList.remove("is-wrong");
+    fb.innerHTML = '<div class="big" style="color:var(--accent)">正解</div>' + (r.m ? '<div class="ans">この単語は習得済みになりました（2連続正解）</div>' : '');
+  }else{
+    quiz.combo=0; quiz.wrong.push(word);
+    r.w++; r.s=0; r.m=false;
+    sndWrong(); vibrate([70,40,70]); flash("wrong");
+    document.body.classList.add("is-wrong");
+    fb.innerHTML = '<div class="big">不正解</div><div class="ans">正解：'+word.w+' ＝ '+word.m+'</div>';
+  }
+  updateCombo();
+  saveStore();
+  document.getElementById("qbar").style.width = ((quiz.i+1)/quiz.qs.length*100)+"%";
+  var nr=document.getElementById("nextrow"); nr.classList.remove("hidden");
+  document.getElementById("btn-next").textContent = (quiz.i+1>=quiz.qs.length) ? "結果を見る" : "次へ";
+}
+function finishQuiz(){
+  store.lastWrong = quiz.wrong.map(function(w){return w.id;});
+  store.history.unshift({ d:new Date().toLocaleDateString("ja-JP"), label:quiz.label, total:quiz.qs.length, correct:quiz.correct });
+  store.history = store.history.slice(0,20);
+  saveStore();
+  var acc = quiz.qs.length ? quiz.correct/quiz.qs.length : 0;
+  var rank = acc>=0.95?"S":acc>=0.85?"A":acc>=0.7?"B":acc>=0.55?"C":acc>=0.4?"D":"E";
+  var msgs={S:"ほぼ完璧。この調子で全300語の習得を目指そう。",A:"よくできている。間違えた語だけ潰せばSが見える。",B:"合格ライン。間違えた語を再テストで固めよう。",C:"半分前後。苦手復習で未習得の語から埋めていこう。",D:"まだ土台作りの段階。Lv1から順に回すのが近道。",E:"ここからがスタート。間違えた語をそのまま再テストしよう。"};
+  document.getElementById("r-rank").textContent=rank;
+  document.getElementById("r-msg").textContent=msgs[rank];
+  document.getElementById("r-correct").textContent=quiz.correct+" / "+quiz.qs.length;
+  document.getElementById("r-acc").textContent=Math.round(acc*100)+"%";
+  document.getElementById("r-combo").textContent=quiz.maxCombo;
+  var wl=document.getElementById("r-wrong"); wl.innerHTML="";
+  if(!quiz.wrong.length){ wl.innerHTML='<p class="small">間違えた単語はありません。全問正解です。</p>'; }
+  quiz.wrong.forEach(function(w){
+    var d=document.createElement("div"); d.className="wrongitem";
+    d.innerHTML='<span class="w"></span><span class="m"></span>';
+    d.querySelector(".w").textContent=w.w; d.querySelector(".m").textContent=w.m;
+    wl.appendChild(d);
+  });
+  document.getElementById("btn-retry2").disabled = !quiz.wrong.length;
+  document.body.classList.remove("is-wrong");
+  show("screen-result");
+  if(rank==="S"||rank==="A"){ particles(); sndCorrect(true); }
+}
+
+/* Home */
+function renderHome(){
+  var mastered=0, learned=0, ta=0, tc=0;
+  WORDS.forEach(function(w){ var r=store.words[w.id]; if(r){ if(r.m) mastered++; if(r.a>0) learned++; ta+=r.a; tc+=r.c; } });
+  document.getElementById("st-mastered").textContent=mastered;
+  document.getElementById("st-learned").textContent=learned;
+  document.getElementById("st-acc").textContent= ta? Math.round(tc/ta*100)+"%" : "—";
+  var bars=document.getElementById("lvbars"); bars.innerHTML="";
+  [1,2,3].forEach(function(lv){
+    var tot=WORDS.filter(function(w){return w.lv===lv;}).length;
+    var m=WORDS.filter(function(w){return w.lv===lv && store.words[w.id] && store.words[w.id].m;}).length;
+    var d=document.createElement("div"); d.className="lvbar";
+    d.innerHTML='<div class="row"><span>Lv'+lv+'</span><span>'+m+' / '+tot+' 習得</span></div><div class="bar"><i style="width:'+(tot?m/tot*100:0)+'%"></i></div>';
+    bars.appendChild(d);
+  });
+  var rb=document.getElementById("btn-retry");
+  rb.disabled = !store.lastWrong.length;
+  document.getElementById("retry-desc").textContent = store.lastWrong.length ? ("直近のテストで間違えた "+store.lastWrong.length+" 語をもう一度") : "直近のテストで間違えた単語をもう一度（まだ記録がありません）";
+  var h=document.getElementById("hist"); h.innerHTML="";
+  if(!store.history.length){ h.innerHTML='<div>まだ学習履歴がありません。</div>'; }
+  store.history.slice(0,5).forEach(function(x){
+    var d=document.createElement("div");
+    d.innerHTML='<span></span><span></span>';
+    d.children[0].textContent=x.d+"　"+x.label;
+    d.children[1].textContent=x.correct+" / "+x.total+" 正解";
+    h.appendChild(d);
+  });
+}
+
+/* List */
+var listLv=0;
+function renderList(){
+  var q=(document.getElementById("search").value||"").trim();
+  var items=WORDS.filter(function(w){
+    if(listLv>=1 && listLv<=3 && w.lv!==listLv) return false;
+    if(listLv===9 && store.words[w.id] && store.words[w.id].m) return false;
+    if(q && w.w.indexOf(q)<0 && w.m.indexOf(q)<0) return false;
+    return true;
+  });
+  document.getElementById("list-count").textContent=items.length+" 語";
+  var box=document.getElementById("wordlist"); box.innerHTML="";
+  items.forEach(function(w){
+    var r=store.words[w.id];
+    var badge = r&&r.m ? '<span class="badge done">習得</span>' : (r&&r.a>0 ? '<span class="badge mid">学習中</span>' : '<span class="badge">未学習</span>');
+    var d=document.createElement("div"); d.className="wordrow";
+    d.innerHTML='<span class="ww"></span><span class="mm"></span>'+badge;
+    d.querySelector(".ww").textContent=w.w;
+    d.querySelector(".mm").textContent="Lv"+w.lv+" ・ "+w.m;
+    box.appendChild(d);
+  });
+}
+
+/* Events */
+document.querySelectorAll("[data-start]").forEach(function(b){
+  b.addEventListener("click", function(){
+    var parts=b.getAttribute("data-start").split(":"); var mode=parts[0]; var count=parseInt(parts[1],10);
+    var labels={lv1:"Lv1 基礎",lv2:"Lv2 標準",lv3:"Lv3 発展",all:"全体ランダム",weak:"苦手復習"};
+    startQuiz(mode,count,labels[mode]);
+  });
+});
+document.getElementById("btn-retry").addEventListener("click", function(){ startQuiz("retry", store.lastWrong.length, "間違いだけ再テスト"); });
+document.getElementById("btn-retry2").addEventListener("click", function(){ startQuiz("retry", store.lastWrong.length, "間違いだけ再テスト"); });
+document.getElementById("btn-again").addEventListener("click", function(){ if(quiz) startQuiz(quiz.mode, quiz.qs.length, quiz.label); });
+document.getElementById("btn-home").addEventListener("click", function(){ show("screen-home"); });
+document.getElementById("btn-quit").addEventListener("click", function(){ show("screen-home"); });
+document.getElementById("btn-next").addEventListener("click", function(){
+  document.body.classList.remove("is-wrong");
+  if(quiz.i+1>=quiz.qs.length) finishQuiz(); else { quiz.i++; renderQ(); }
+});
+document.getElementById("btn-list").addEventListener("click", function(){ show("screen-list"); renderList(); });
+document.getElementById("btn-back").addEventListener("click", function(){ show("screen-home"); });
+document.getElementById("search").addEventListener("input", renderList);
+document.querySelectorAll("#chips .chip").forEach(function(c){
+  c.addEventListener("click", function(){
+    document.querySelectorAll("#chips .chip").forEach(function(x){x.classList.remove("on");});
+    c.classList.add("on"); listLv=parseInt(c.getAttribute("data-lv"),10); renderList();
+  });
+});
+document.getElementById("btn-reset").addEventListener("click", function(){
+  store={words:{},history:[],lastWrong:[]}; saveStore(); renderHome();
+  document.getElementById("reset-msg").textContent="学習記録を消去しました。";
+});
+renderHome();
+</script>
+</body>
+</html>
